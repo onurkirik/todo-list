@@ -2,27 +2,67 @@ import { Button, Container, Form, ListGroup, ListGroupItem } from 'react-bootstr
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const sampleTodos = [
+  { title: "Buy gorceries", done: false },
+  { title: "Do laundary", done: false },
+  { title: "Walk the dog", done: true },
+  { title: "Pay pills", done: true }
+];
 
 function App() {
 
+  let initialTodos = sampleTodos;
+
+  useEffect(() => {
+    try {
+      if (localStorage["data"]) {
+        initialTodos = JSON.parse(localStorage["data"]);
+      }
+    } catch (e) {
+    }
+    setTodos(initialTodos)
+  }, []);
+
+
+
   const [title, setTitle] = useState("");
-  const [todos, setTodos] = useState([
-    { title: "Buy gorceries", done: false },
-    { title: "Do laundary", done: false },
-    { title: "Walk the dog", done: true },
-    { title: "Pay pills", done: true }
-  ]);
+  const [todos, setTodos] = useState([]);
+
+  const save = function (arr) {
+    localStorage["data"] = JSON.stringify(arr);
+  };
+
+
+  const handleDelete = function (event, index) {
+    let newTodos = [...todos];
+    newTodos.splice(index, 1);
+    sortAndSetTodos(newTodos);
+  }
+
+  const sortAndSetTodos = function (arr) {
+    arr.sort((a, b) => a.done - b.done);
+    save(arr);
+    setTodos(arr);
+  };
 
   const handleSubmit = function (event) {
     event.preventDefault();
-    setTodos([...todos, {title, done:false}]);
+    let newTodos = [...todos, { title, done: false }];
+    sortAndSetTodos(newTodos);
     setTitle("");
   };
 
   const handleTitleChange = function (event) {
     setTitle(event.target.value);
   };
+
+  const update = function (event, index) {
+    let newTodos = [...todos];
+    newTodos[index].done = event.target.checked;
+    sortAndSetTodos(newTodos);
+  }
 
   return (
     <div className="App">
@@ -34,14 +74,13 @@ function App() {
             <FontAwesomeIcon icon={faPlus} />
           </Button>
         </Form>
-        {title}
         <ListGroup>
           {
             todos.map((x, i) =>
               <ListGroup.Item key={i} className='d-flex align-items-center' >
-                <input type='checkbox' className='me-2' checked={x.done} />
+                <input onChange={(e) => update(e, i)} type='checkbox' className='me-2' checked={x.done} />
                 <span className='me-auto'>{x.title}</span>
-                <Button variant='danger' size='sm'>
+                <Button onClick={(e) => handleDelete(e, i)} variant='danger' size='sm'>
                   <FontAwesomeIcon icon={faXmark} />
                 </Button>
               </ListGroup.Item>
